@@ -1,3 +1,3 @@
-Manifest-Version: 1.0 
-Main-Class: frame.frame 
-Class-Path: Socket_gui.jar
+Manifest-Version: 1.0
+Main-Class: frame.frame
+

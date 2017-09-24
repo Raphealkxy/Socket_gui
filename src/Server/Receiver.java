@@ -1,5 +1,5 @@
 package Server;
-import java.awt.TextArea;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,25 +10,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Vector;
 
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
-import org.jfree.data.time.Day;
-import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.Minute;
-import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
 public class Receiver {
 
-	//private final  ServerSocket serverSocket;
+	// private final ServerSocket serverSocket;
 	private Socket socket;
 	private Boolean lock;
 	private int port;
@@ -37,116 +31,147 @@ public class Receiver {
 	private String testparam;
 	private String testAddress;
 
-	public Receiver(int port,double toplimit,double lowerlimit,String testparam,String testAddress) throws IOException {
+	public Receiver(int port, double toplimit, double lowerlimit, String testparam, String testAddress)
+			throws IOException {
 
-	
-		this.port=port;
-		this.toplimit=toplimit;
-		this.lowerlimit=lowerlimit;
-		this.testparam=testparam;
-		this.testAddress=testAddress;
-		
-	
+		this.port = port;
+		this.toplimit = toplimit;
+		this.lowerlimit = lowerlimit;
+		this.testparam = testparam;
+		this.testAddress = testAddress;
+
 	}
 
-	public void receive(TimeSeriesCollection dataset,TimeSeries timeSeries,JTable jTable,JTextField jTextField,double toplimit,double lowerlimit,ServerSocket serverSocket,List<Map<String, String>>datas) throws IOException {
-         
+	public void receive(TimeSeriesCollection dataset, TimeSeries timeSeries, JTable jTable, JTextField jTextField,
+			double toplimit, double lowerlimit, ServerSocket serverSocket, List<Map<String, String>> datas)
+			throws IOException {
+
 		Vector vData = new Vector();
 		Vector vName = new Vector();
 		Vector vRow;
 		DefaultTableModel tableModel;
 		vName.add("时间");
 		vName.add("记录值");
-		if(!serverSocket.isClosed())
-		{
+		if (!serverSocket.isClosed()) {
 			socket = serverSocket.accept();
-            lock=true;
-			//break;
-		}else{
-			lock=false;
+			lock = true;
+			// break;
+		} else {
+			lock = false;
 		}
 		double value;
-		//SimpleDateFormat sdf;
-		Calendar calendar;		  
+		// SimpleDateFormat sdf;
+		Calendar calendar;
 		Date date;
-		Boolean flag=true;
-	  
-
+		Boolean flag = true;
 		try (DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 			while (true) {
-				
-				if(serverSocket.isClosed())
-				{
+
+				if (serverSocket.isClosed()) {
 					break;
 				}
-				
-				byte[] bytes = new byte[30]; // 假设发送的字节数不超过 1024 个
+
+				byte[] bytes = new byte[8]; // 假设发送的字节数不超过 1024 个
 				int size = dis.read(bytes); // size 是读取到的字节数
 
 				if (size > 0) {
 					Date now = new Date();
-					
-				
 
 					SimpleDateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
-				
 
 					try {
-						String str = new String(bytes, "GBK");
+						// System.out.println(bytes.length);
+
+						String string = bytesToHex(bytes, 0, 8);
+						// System.out.println(string.length());
+						Map<Integer, String> map1 = new HashMap<Integer, String>();
+						map1.put(1, bytesToHex(bytes, 0, 1).trim());
+						map1.put(2, bytesToHex(bytes, 1, 2).trim());
+						map1.put(3, bytesToHex(bytes, 2, 3).trim());
+						map1.put(4, bytesToHex(bytes, 3, 4).trim());
+						map1.put(5, bytesToHex(bytes, 4, 5).trim());
+						map1.put(6, bytesToHex(bytes, 5, 6).trim());
+						map1.put(7, bytesToHex(bytes, 6, 7).trim());
+						map1.put(8, bytesToHex(bytes, 7, 8).trim());
+
+						int a = Integer.parseInt(map1.get(1), 16);
+						int b = Integer.parseInt(map1.get(2), 16);
+						int c = Integer.parseInt(map1.get(3), 16);
+						int d = Integer.parseInt(map1.get(4), 16);
+						int e = Integer.parseInt(map1.get(5), 16);
+						int f = Integer.parseInt(map1.get(6), 16);
+						int g = Integer.parseInt(map1.get(7), 16);
+						int h = Integer.parseInt(map1.get(8), 16);
+						// System.out.println(a);
+						// System.out.println(b);
+						// System.out.println(c);
+						// System.out.println(d);
+						// System.out.println(e);
+						// System.out.println(f);
+						// System.out.println(g);
+						// System.out.println(h);
+						String strnum;
+						if (a != 0)
+							strnum = a + "" + b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
+						else {
+							strnum = b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
+
+						}
+						// for()
+						// System.out.println(strnum);
+						value = Double.valueOf(strnum);
+						System.out.println(value);
+						// String str = new String(bytes);
 						String str2 = new String(bytes, "GB18030");
 
-			
-				  		value=Double.valueOf(str.trim());
-						timeSeries.add(new Millisecond(),value);
-						
-						if(flag)
-						{
-					       dataset.addSeries(timeSeries);
-					       flag=false;
+						// value = Double.valueOf(str.trim());
+						timeSeries.add(new Millisecond(), value);
+
+						if (flag) {
+							dataset.addSeries(timeSeries);
+							flag = false;
+
 						}
-					       try {  
-				                Thread.currentThread().sleep(100);  
-				            } catch (InterruptedException e) {  
-				                e.printStackTrace();  
-				            }  
-//				    	   System.out.println(value);
-//                          System.out.println(lowerlimit);
-//                          System.out.println(toplimit);
-					       Date date1 = new Date(System.currentTimeMillis());
-				            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				            String time = sdf.format(date1);
 
-				    		Map<String,String>map=new HashMap<>();
-				    		map.put("端口号",port+"");
-				    		map.put("报警上限", toplimit+"");
-				    		map.put("报警下限",lowerlimit+"");
-				    		map.put("测量参数", testparam);
-				    		map.put("测量地址", testAddress);
-				    		map.put("记录值", value+"");
-				    		map.put("记录时间", time);
-				    		datas.add(map);
+						try {
+							Thread.currentThread().sleep(100);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						} //
+							// System.out.println(value); //
+						System.out.println(lowerlimit); //
+						System.out.println(toplimit);
+						Date date1 = new Date(System.currentTimeMillis());
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+						String time = sdf.format(date1);
 
-					       if(value>=lowerlimit&&value<=toplimit)
-					       {
-					    	   vRow = new Vector();
-					    	   vRow.add(sFormat.format(now));
-					    	   vRow.add(str.trim());
-					    	   vData.add(vRow);
-					    	   tableModel=new DefaultTableModel(vData, vName);
-					    	   jTable.setModel(tableModel);
+						Map<String, String> map = new HashMap<>();
+						map.put("端口号", port + "");
+						map.put("报警上限", toplimit + "");
+						map.put("报警下限", lowerlimit + "");
+						map.put("测量参数", testparam);
+						map.put("测量地址", testAddress);
+						map.put("记录值", value + "");
+						map.put("记录时间", time);
+						datas.add(map);
 
-					       }
-				    	   jTextField.setText(str.trim());
+						if (value >= lowerlimit && value <= toplimit) {
+							vRow = new Vector();
+							vRow.add(sFormat.format(now));
+							vRow.add(strnum);
+							vData.add(vRow);
+							tableModel = new DefaultTableModel(vData, vName);
+							jTable.setModel(tableModel);
 
+						}
+						jTextField.setText(strnum);
 
-				
 					} catch (Exception e) {
 						e.printStackTrace();
-					
-					}
-					
-				}
 
+					}
+
+				}
 
 			}
 		}
