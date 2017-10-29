@@ -1,6 +1,7 @@
 package Server;
 
 import java.io.DataInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -30,7 +32,7 @@ public class Receiver {
 	private double lowerlimit;
 	private String testparam;
 	private String testAddress;
-
+    
 	public Receiver(int port, double toplimit, double lowerlimit, String testparam, String testAddress)
 			throws IOException {
 
@@ -198,5 +200,6 @@ public class Receiver {
 		}
 		return hexBuilder.toString().toUpperCase();
 	}
+
 
 }

@@ -1,20 +1,29 @@
 package frame;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +40,24 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+
+
+
+
+
+
+
+
+
+
+
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.DateTickUnit;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
@@ -42,6 +66,18 @@ import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
+
+
+
+
+
+
+
+
+
+
+
+
 
 import Server.Receiver;
 import utils.IsNum;
@@ -62,7 +98,8 @@ public class frame extends JFrame {
 	private JTable table;
 	private JTable table_1;
 	private TimeSeriesCollection dataset = new TimeSeriesCollection();
-	private final TimeSeries timeSeries = new TimeSeries("数据折线图", Millisecond.class);;
+	private final TimeSeries timeSeries = new TimeSeries("",
+			Millisecond.class);;
 	private double toplimit;
 	private double lowerlimit;
 	private String testParam;
@@ -72,11 +109,46 @@ public class frame extends JFrame {
 	private Date date = new Date(System.currentTimeMillis());
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 	private String time = sdf.format(date);
-
-	/**
+    private JFreeChart result;
+    private String writePath="datas.txt";
+	/**	
 	 * Launch the application.
 	 */
-
+    public static String[] convertStrToArray(String str){  
+        String[] strArray = null;  
+        strArray = str.split("/"); //拆分字符为"," ,然后把结果交给数组strArray
+        return strArray;
+    }  
+	 /** 
+	    *  
+	    * @param calculator 
+	    * @param widthRate 宽度比例  
+	    * @param heightRate 高度比例 
+	    */  
+//	public static void modifyComponentSize(JFrame frame,float proportionW,float proportionH){  
+//        
+//        try   
+//        {  
+//            Component[] components = frame.getRootPane().getContentPane().getComponents();  
+//            for(Component co:components)  
+//            {  
+//
+//                float locX = co.getX() * proportionW;  
+//                float locY = co.getY() * proportionH;  
+//                float width = co.getWidth() * proportionW;  
+//                float height = co.getHeight() * proportionH;  
+//                co.setLocation((int)locX, (int)locY);  
+//                co.setSize((int)width, (int)height);  
+//                int size = (int)(co.getFont().getSize() * proportionH);  
+//                Font font = new Font(co.getFont().getFontName(), co.getFont().getStyle(), size);  
+//                co.setFont(font);  
+//            }  
+//        }   
+//        catch (Exception e)   
+//        {  
+//            // TODO: handle exception  
+//        }  
+//    }  
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -103,9 +175,59 @@ public class frame extends JFrame {
 	}
 
 	private JFreeChart createChart(XYDataset dataset) {
-		JFreeChart result = ChartFactory.createTimeSeriesChart("Swing动态折线图", "系统当前时间", "动态数值变化", dataset, true, true,
-				false);
+		
+        // 增加汉字支持  
+
+    
+		/**
+		 * 第一个参数是设置折线图的主题
+		 * 第二个参数是设置折线图的x
+		 * 第三个参数是设置折线图的y
+		 * 是否显示图表中每条数据序列的说明  
+		 * 是否显示工具提示  
+		 * 是否显示图表中设置的url网络连接 
+		 */
+		 result = ChartFactory.createTimeSeriesChart("Swing动态折线图",
+				"系统当前时间", "动态数值变化", dataset, false, true, false);
 		XYPlot plot = (XYPlot) result.getPlot();
+		 plot.setBackgroundPaint(Color.PINK);      // 设置图表背景颜色  
+
+         plot.setDomainGridlinePaint(Color.BLUE);  // 设置横向网格线蓝色  
+
+         plot.setRangeGridlinePaint(Color.BLUE);   // 设置纵向网格线蓝色  
+
+         /**
+          * DateTickUnit.MINUTE 是时间类型,在DateTickUnit类中定义 常用的还有
+          * DateTickUnit.DAY
+          * 等 ,这个参数是和count配合起来,形成时间轴间距的效果
+          */
+         /**
+          * count 间距值需要按照时间类型确定,如 时间类型是分钟 ,那么count=5  间距为5分钟
+          */
+         DateAxis  dateaxiss=(DateAxis)plot.getDomainAxis();
+        // dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.MINUTE, 1, new SimpleDateFormat("HH:mm:ss"))); 
+//         dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.MINUTE, 5,
+//        		 new SimpleDateFormat("HH:mm")));
+        
+         dateaxiss.setPositiveArrowVisible(true);
+         dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.DAY,1));
+         
+       //  dateaxiss.set
+		// 设置数据点和序列线的显示
+		XYItemRenderer r = plot.getRenderer();
+
+		if (r instanceof XYLineAndShapeRenderer) {
+
+			XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) r;
+
+			renderer.setBaseShapesVisible(true); // 数据点显示外框
+
+			renderer.setBaseShapesFilled(false); // 数据点外框内不填充
+
+		}
+
+         
+         
 		ValueAxis axis = plot.getDomainAxis();
 		axis.setAutoRange(true);
 		axis.setFixedAutoRange(60000.0);
@@ -118,26 +240,44 @@ public class frame extends JFrame {
 	 * Create the frame.
 	 */
 	public frame() {
+		setResizable(false);
+		  //用来设置窗口随屏幕大小改变  
+//        sizeWindowOnScreen(this, 0.6, 0.6);  
+//        this.setVisible(true); 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 983, 715);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-
+//		int fraWidth = this.getWidth();//frame的宽  
+//        int fraHeight = this.getHeight();//frame的高  
+//        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
+//        int screenWidth = screenSize.width;  
+//        int screenHeight = screenSize.height;  
+//        this.setSize(screenWidth, screenHeight);  
+//        this.setLocation(0, 0);  
+//        float proportionW = screenWidth/fraWidth;  
+//        float proportionH = screenHeight/fraHeight;  
+//          
+//        modifyComponentSize(this, proportionW,proportionH);  
+//        this.toFront();
+	
 		JLabel lblNewLabel = new JLabel("  端口号");
 		lblNewLabel.setFont(new Font("宋体", Font.PLAIN, 22));
 		lblNewLabel.setBounds(120, 51, 132, 46);
 		lblNewLabel.setBorder(BorderFactory.createLineBorder(Color.gray));
 		contentPane.add(lblNewLabel);
 
+       // Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
+//          int width=screenSize.width;
+//          int heigt=screenSize.height;
 		textField = new JTextField();
 		textField.setHorizontalAlignment(SwingConstants.CENTER);
 		textField.setFont(new Font("宋体", Font.PLAIN, 25));
 		textField.setBounds(120, 97, 132, 46);
 		contentPane.add(textField);
 		textField.setColumns(10);
-		this.setResizable(true); // 设置窗口大小是否可变
 		ImageIcon icon = new ImageIcon("src/image/timg.jpg");
 		// new ImageIcon(this.getClass().getResource("Resources/timg.jpg"));
 		this.setIconImage(icon.getImage());
@@ -146,8 +286,10 @@ public class frame extends JFrame {
 
 		scrollPane.setBounds(250, 142, 703, 501);
 		contentPane.add(scrollPane);
-		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scrollPane
+				.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane
+				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 		ChartPanel panel = new ChartPanel(createChart(dataset));
 		scrollPane.setViewportView(panel);
@@ -165,7 +307,8 @@ public class frame extends JFrame {
 
 					@Override
 					public void run() {
-						if (textField.getText().trim().equals("") || textField_1.getText().trim().equals("")
+						if (textField.getText().trim().equals("")
+								|| textField_1.getText().trim().equals("")
 								|| textField_2.getText().trim().equals("")) {
 							if (textField.getText().trim().equals("")) {
 								textField.setText("请输入端口号");
@@ -183,8 +326,10 @@ public class frame extends JFrame {
 							btnNewButton_4.setEnabled(true);
 
 						} else if (!IsNum.isNumeric(textField.getText().trim())
-								|| !IsNum.isNumeric(textField_1.getText().trim())
-								|| !IsNum.isNumeric(textField_2.getText().trim())) {
+								|| !IsNum.isNumeric(textField_1.getText()
+										.trim())
+								|| !IsNum.isNumeric(textField_2.getText()
+										.trim())) {
 							if (!IsNum.isNumeric(textField.getText().trim())) {
 								textField.setText("输入数字");
 
@@ -199,32 +344,39 @@ public class frame extends JFrame {
 
 							}
 							btnNewButton_4.setEnabled(true);
-						} else if (Double.parseDouble(textField_1.getText()) > Double
+						} else if (Double.parseDouble(textField_1.getText()) < Double
 								.parseDouble(textField_2.getText())) {
-							textField_1.setText("上限不能大于下限");
-							textField_2.setText("上限不能大于下限");
+							textField_1.setText("上限不能小于下限");
+							textField_2.setText("上限不能小于下限");
 							btnNewButton_4.setEnabled(true);
 
-						} else if (textField_3.getText().trim().equals("") || textField_4.getText().trim().equals("")) {
+						} else if (textField_3.getText().trim().equals("")
+								|| textField_4.getText().trim().equals("")) {
 							textField_3.setText("请输入参数");
 							textField_4.setText("请输入地址");
 							btnNewButton_4.setEnabled(true);
 						} else {
+							String s=textField.getText()+"/"+textField_1.getText()+"/"+textField_2.getText()+"/"+textField_3.getText()+"/"+textField_4.getText();
+
+							Writeinfo(s);
 
 							btnNewButton_4.setEnabled(false);
 
 							prot = Integer.parseInt(textField.getText());
 							toplimit = Double.parseDouble(textField_1.getText());
-							lowerlimit = Double.parseDouble(textField_2.getText());
+							lowerlimit = Double.parseDouble(textField_2
+									.getText());
 							testParam = textField_3.getText();
 							testAddress = textField_4.getText();
 
 							Receiver receiver;
 							try {
 								serverSocket = new ServerSocket(prot);
-								receiver = new Receiver(prot, toplimit, lowerlimit, testParam, testAddress);
+								receiver = new Receiver(prot, toplimit,
+										lowerlimit, testParam, testAddress);
 								// textArea.append("打开端口成功，等待数据...\n");
-								receiver.receive(dataset, timeSeries, table_1, textField_5, lowerlimit, toplimit,
+								receiver.receive(dataset, timeSeries, table_1,
+										textField_5, lowerlimit, toplimit,
 										serverSocket, datas);
 							} catch (IOException e1) {
 								e1.printStackTrace();
@@ -275,17 +427,21 @@ public class frame extends JFrame {
 				// SimpleDateFormat("yyyyMMddHHmmss");
 				// String time = sdf.format(date);
 				JFileChooser jf = new JFileChooser();
-				jf.setFileSelectionMode(JFileChooser.SAVE_DIALOG | JFileChooser.DIRECTORIES_ONLY);
+				jf.setFileSelectionMode(JFileChooser.SAVE_DIALOG
+						| JFileChooser.DIRECTORIES_ONLY);
 				jf.setDialogTitle("选择文件夹");
 				jf.showDialog(null, null);
 				File fi = jf.getSelectedFile();
 				String file = fi.getAbsolutePath() + "\\" + time + ".xls";
 				try {
 					OutputStream os = new FileOutputStream(file);
-					String[] headers = { "端口号", "报警上限", "报警下限", "测量参数", "测量地址", "记录值", "记录时间" };
+					String[] headers = { "端口号", "报警上限", "报警下限", "测量参数", "测量地址",
+							"记录值", "记录时间" };
 					// datas.add(map);
 					transToExcel.exporteExcel("学生表", headers, datas, os);
 					os.close();
+					ChartUtilities.saveChartAsPNG(new File("C:\\Users\\Timmy\\Desktop\\"+"n"+".png"), result, 550, 250); 
+
 				} catch (FileNotFoundException e1) {
 					System.out.println("无法找到文件");
 
@@ -294,7 +450,6 @@ public class frame extends JFrame {
 					System.out.println("写入文件失败");
 
 				}
-
 				// BufferedWriter bw = null;
 				// try {
 				// OutputStream os = new FileOutputStream(file);
@@ -345,7 +500,7 @@ public class frame extends JFrame {
 		textField_1.setBounds(251, 97, 166, 46);
 		contentPane.add(textField_1);
 		textField_1.setColumns(10);
-
+        
 		JLabel lblNewLabel_2 = new JLabel("   报警下限");
 		lblNewLabel_2.setFont(new Font("宋体", Font.PLAIN, 22));
 		lblNewLabel_2.setBounds(415, 51, 151, 46);
@@ -424,10 +579,58 @@ public class frame extends JFrame {
 
 		JScrollPane scrollPane_1 = new JScrollPane(table_1);
 		scrollPane_1.setBounds(16, 358, 234, 285);
-		scrollPane_1.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane_1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scrollPane_1
+				.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane_1
+				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 		contentPane.add(scrollPane_1);
+		File file=new File(writePath);
+		if(file.exists())
+		{
+		 String s=Readinfo();
+		 String [] datas1=null;
+		 if(s!=null){
+			 datas1=convertStrToArray(s);
+			 textField.setText(datas1[0].trim());
+			 textField_1.setText(datas1[1].trim());
+			 textField_2.setText(datas1[2].trim());
+			 textField_3.setText(datas1[3].trim());
+			 textField_4.setText(datas1[4].trim());
+		 }
+		}
+	}
+	private void Writeinfo(String s)
+	{
+	       File file = new File(writePath);
+           PrintStream ps;
+		try {
+			ps = new PrintStream(new FileOutputStream(file));
+	           ps.println(s);// 往文件里写入字符串
 
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private String Readinfo()
+	{
+		//String  read=null;
+        File file = new File(writePath);
+		StringBuilder result = new StringBuilder();
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(file));//构造一个BufferedReader类来读取文件
+            String s = null;
+            while((s = br.readLine())!=null){//使用readLine方法，一次读一行
+                result.append(System.lineSeparator()+s);
+            }
+            br.close();    
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return result.toString();
+		
+		
 	}
 }
