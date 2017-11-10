@@ -187,8 +187,8 @@ public class frame extends JFrame {
 		 * 是否显示工具提示  
 		 * 是否显示图表中设置的url网络连接 
 		 */
-		 result = ChartFactory.createTimeSeriesChart("Swing动态折线图",
-				"系统当前时间", "动态数值变化", dataset, false, true, false);
+		 result = ChartFactory.createTimeSeriesChart("",
+				"", "", dataset, false, true, false);
 		XYPlot plot = (XYPlot) result.getPlot();
 		 plot.setBackgroundPaint(Color.PINK);      // 设置图表背景颜色  
 
