@@ -18,7 +18,11 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.Minute;
+import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
@@ -62,7 +66,6 @@ public class Receiver {
 			lock = false;
 		}
 		double value;
-		// SimpleDateFormat sdf;
 		Calendar calendar;
 		Date date;
 		Boolean flag = true;
@@ -104,14 +107,7 @@ public class Receiver {
 						int f = Integer.parseInt(map1.get(6), 16);
 						int g = Integer.parseInt(map1.get(7), 16);
 						int h = Integer.parseInt(map1.get(8), 16);
-						// System.out.println(a);
-						// System.out.println(b);
-						// System.out.println(c);
-						// System.out.println(d);
-						// System.out.println(e);
-						// System.out.println(f);
-						// System.out.println(g);
-						// System.out.println(h);
+				
 						String strnum;
 						if (a != 0)
 							strnum = a + "" + b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
@@ -119,16 +115,23 @@ public class Receiver {
 							strnum = b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
 
 						}
-						// for()
-						// System.out.println(strnum);
+						
 						value = Double.valueOf(strnum);
 						System.out.println(value);
-						// String str = new String(bytes);
 						String str2 = new String(bytes, "GB18030");
-
-						// value = Double.valueOf(str.trim());
-						timeSeries.add(new Millisecond(), value);
-
+                         
+						Date date2=new Date(System.currentTimeMillis());
+						SimpleDateFormat simpleFormatter=new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+						String dateString=simpleFormatter.format(date2);
+						String[]dStrings=dateString.split("-");
+						Day day = new Day(Integer.parseInt(dStrings[2]), Integer.parseInt(dStrings[1]), Integer.parseInt(dStrings[0]));
+						Hour hour=new Hour(Integer.parseInt(dStrings[3]),day);
+						Minute minute=new Minute(Integer.parseInt(dStrings[4]),hour);
+						
+						timeSeries.addOrUpdate(new Second(Integer.parseInt(dStrings[5]),minute), value);
+						if (dStrings[3].equals("00")) {
+							timeSeries.clear();
+						}
 						if (flag) {
 							dataset.addSeries(timeSeries);
 							flag = false;
@@ -140,7 +143,6 @@ public class Receiver {
 						} catch (InterruptedException e1) {
 							e1.printStackTrace();
 						} //
-							// System.out.println(value); //
 						System.out.println(lowerlimit); //
 						System.out.println(toplimit);
 						Date date1 = new Date(System.currentTimeMillis());

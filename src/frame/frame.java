@@ -51,6 +51,7 @@ import javax.swing.border.EmptyBorder;
 
 
 
+
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -63,9 +64,11 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
+
 
 
 
@@ -97,9 +100,9 @@ public class frame extends JFrame {
 	private JTextField textField_5;
 	private JTable table;
 	private JTable table_1;
-	private TimeSeriesCollection dataset = new TimeSeriesCollection();
+	private TimeSeriesCollection dataset = new TimeSeriesCollection();//数据集
 	private final TimeSeries timeSeries = new TimeSeries("",
-			Millisecond.class);;
+			Millisecond.class);//创建时间序
 	private double toplimit;
 	private double lowerlimit;
 	private String testParam;
@@ -125,30 +128,7 @@ public class frame extends JFrame {
 	    * @param widthRate 宽度比例  
 	    * @param heightRate 高度比例 
 	    */  
-//	public static void modifyComponentSize(JFrame frame,float proportionW,float proportionH){  
-//        
-//        try   
-//        {  
-//            Component[] components = frame.getRootPane().getContentPane().getComponents();  
-//            for(Component co:components)  
-//            {  
-//
-//                float locX = co.getX() * proportionW;  
-//                float locY = co.getY() * proportionH;  
-//                float width = co.getWidth() * proportionW;  
-//                float height = co.getHeight() * proportionH;  
-//                co.setLocation((int)locX, (int)locY);  
-//                co.setSize((int)width, (int)height);  
-//                int size = (int)(co.getFont().getSize() * proportionH);  
-//                Font font = new Font(co.getFont().getFontName(), co.getFont().getStyle(), size);  
-//                co.setFont(font);  
-//            }  
-//        }   
-//        catch (Exception e)   
-//        {  
-//            // TODO: handle exception  
-//        }  
-//    }  
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -165,7 +145,6 @@ public class frame extends JFrame {
 	public void setXYPolt(XYPlot plot) {
 		plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
 		plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-		// plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
 		XYItemRenderer r = plot.getRenderer();
 		if (r instanceof XYLineAndShapeRenderer) {
 			XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) r;
@@ -189,50 +168,9 @@ public class frame extends JFrame {
 		 */
 		 result = ChartFactory.createTimeSeriesChart("",
 				"", "", dataset, false, true, false);
-		XYPlot plot = (XYPlot) result.getPlot();
-		 plot.setBackgroundPaint(Color.PINK);      // 设置图表背景颜色  
-
-         plot.setDomainGridlinePaint(Color.BLUE);  // 设置横向网格线蓝色  
-
-         plot.setRangeGridlinePaint(Color.BLUE);   // 设置纵向网格线蓝色  
-
-         /**
-          * DateTickUnit.MINUTE 是时间类型,在DateTickUnit类中定义 常用的还有
-          * DateTickUnit.DAY
-          * 等 ,这个参数是和count配合起来,形成时间轴间距的效果
-          */
-         /**
-          * count 间距值需要按照时间类型确定,如 时间类型是分钟 ,那么count=5  间距为5分钟
-          */
-         DateAxis  dateaxiss=(DateAxis)plot.getDomainAxis();
-        // dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.MINUTE, 1, new SimpleDateFormat("HH:mm:ss"))); 
-//         dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.MINUTE, 5,
-//        		 new SimpleDateFormat("HH:mm")));
-        
-         dateaxiss.setPositiveArrowVisible(true);
-         dateaxiss.setTickUnit(new DateTickUnit(DateTickUnit.DAY,1));
-         
-       //  dateaxiss.set
-		// 设置数据点和序列线的显示
-		XYItemRenderer r = plot.getRenderer();
-
-		if (r instanceof XYLineAndShapeRenderer) {
-
-			XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) r;
-
-			renderer.setBaseShapesVisible(true); // 数据点显示外框
-
-			renderer.setBaseShapesFilled(false); // 数据点外框内不填充
-
-		}
-
-         
-         
-		ValueAxis axis = plot.getDomainAxis();
-		axis.setAutoRange(true);
-		axis.setFixedAutoRange(60000.0);
-		axis = plot.getRangeAxis();
-		axis.setRange(0.0, 200.0);
+		 result.setBackgroundPaint(Color.YELLOW);
+			XYPlot plot = result.getXYPlot();
+			setXYPolt(plot);
 		return result;
 	}
 
@@ -250,18 +188,7 @@ public class frame extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-//		int fraWidth = this.getWidth();//frame的宽  
-//        int fraHeight = this.getHeight();//frame的高  
-//        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
-//        int screenWidth = screenSize.width;  
-//        int screenHeight = screenSize.height;  
-//        this.setSize(screenWidth, screenHeight);  
-//        this.setLocation(0, 0);  
-//        float proportionW = screenWidth/fraWidth;  
-//        float proportionH = screenHeight/fraHeight;  
-//          
-//        modifyComponentSize(this, proportionW,proportionH);  
-//        this.toFront();
+
 	
 		JLabel lblNewLabel = new JLabel("  端口号");
 		lblNewLabel.setFont(new Font("宋体", Font.PLAIN, 22));
@@ -269,9 +196,6 @@ public class frame extends JFrame {
 		lblNewLabel.setBorder(BorderFactory.createLineBorder(Color.gray));
 		contentPane.add(lblNewLabel);
 
-       // Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
-//          int width=screenSize.width;
-//          int heigt=screenSize.height;
 		textField = new JTextField();
 		textField.setHorizontalAlignment(SwingConstants.CENTER);
 		textField.setFont(new Font("宋体", Font.PLAIN, 25));
@@ -279,7 +203,6 @@ public class frame extends JFrame {
 		contentPane.add(textField);
 		textField.setColumns(10);
 		ImageIcon icon = new ImageIcon("src/image/timg.jpg");
-		// new ImageIcon(this.getClass().getResource("Resources/timg.jpg"));
 		this.setIconImage(icon.getImage());
 
 		JScrollPane scrollPane = new JScrollPane();
@@ -450,22 +373,7 @@ public class frame extends JFrame {
 					System.out.println("写入文件失败");
 
 				}
-				// BufferedWriter bw = null;
-				// try {
-				// OutputStream os = new FileOutputStream(file);
-				// bw = new BufferedWriter(new OutputStreamWriter(os));
-				//
-				// } catch (IOException e1) {
-				// e1.printStackTrace();
-				// } finally {
-				// if (bw != null) {
-				// try {
-				// bw.close();
-				// } catch (IOException e1) {
-				// e1.printStackTrace();
-				// }
-				// }
-				// }
+
 
 			}
 		});

@@ -44,7 +44,7 @@ public class TestTimeSeriesChart {
 						Day day = new Day(Integer.parseInt(dStrings[2]), Integer.parseInt(dStrings[1]), Integer.parseInt(dStrings[0]));
 						Hour hour=new Hour(Integer.parseInt(dStrings[3]),day);
 						timeSeries1.addOrUpdate(new Minute(Integer.parseInt(dStrings[4]), hour), value);
-						if (Integer.parseInt(dStrings[3])==0) {
+						if (dStrings[3].equals("00")) {
 							timeSeries1.clear();
 						}
 						
