@@ -1,6 +1,9 @@
 package com.timmy.demo;
 
 import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.SimpleFormatter;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -20,18 +23,9 @@ public class TestTimeSeriesChart {
 
 	public static void createTimeSeriesChart() {
 		TimeSeriesCollection dataset = new TimeSeriesCollection();
-		Day day = new Day(21, 9, 2008);
-		Hour hour22 = new Hour(22, day);
-		final Hour hour23 = new Hour(23, day);
 
 		final TimeSeries timeSeries1 = new TimeSeries("", Minute.class);
-		timeSeries1.add(new Minute(32, hour22), 10.38);
-		timeSeries1.add(new Minute(14, hour22), 2.35);
-		timeSeries1.add(new Minute(23, hour22), 2.25);
-		timeSeries1.add(new Minute(46, hour22), 2.16);
-		timeSeries1.add(new Minute(40, hour22), 2.16);
-		timeSeries1.add(new Minute(6, hour22), 1.95);
-		timeSeries1.add(new Minute(51, hour22), 1.93);
+
 
 		new Thread(new Runnable() {
 
@@ -39,21 +33,28 @@ public class TestTimeSeriesChart {
 			public void run() {
 
 				try {
-					int min = 0;
-					double value = 0;
-					for (int i = 0; i < 10000; i++) {
-						timeSeries1.add(new Minute(min, hour23), value);
-						if (i == 100 || i == 300) {
+					double value = 10;
+               
+					while(true){
+						Date date=new Date(System.currentTimeMillis());
+						
+						SimpleDateFormat simpleFormatter=new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+						String dateString=simpleFormatter.format(date);
+						String[]dStrings=dateString.split("-");
+						Day day = new Day(Integer.parseInt(dStrings[2]), Integer.parseInt(dStrings[1]), Integer.parseInt(dStrings[0]));
+						Hour hour=new Hour(Integer.parseInt(dStrings[3]),day);
+						timeSeries1.addOrUpdate(new Minute(Integer.parseInt(dStrings[4]), hour), value);
+						if (Integer.parseInt(dStrings[3])==0) {
 							timeSeries1.clear();
 						}
-						min++;
+						
 						value = Math.random() * 2 + 3;
-						Thread.sleep(100);
+						Thread.sleep(60000);
 					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-
+        
 			}
 		}).start();
 
