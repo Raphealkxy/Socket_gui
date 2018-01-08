@@ -1,7 +1,6 @@
 package Server;
 
 import java.io.DataInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,14 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
-import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
@@ -36,7 +33,7 @@ public class Receiver {
 	private double lowerlimit;
 	private String testparam;
 	private String testAddress;
-    
+
 	public Receiver(int port, double toplimit, double lowerlimit, String testparam, String testAddress)
 			throws IOException {
 
@@ -48,14 +45,13 @@ public class Receiver {
 
 	}
 
-	public void receive(TimeSeriesCollection dataset, TimeSeries timeSeries, JTable jTable, JTextField jTextField,
+	public void receive(TimeSeriesCollection dataset, TimeSeries timeSeries, final JTable jTable, JTextField jTextField,
 			double toplimit, double lowerlimit, ServerSocket serverSocket, List<Map<String, String>> datas)
-			throws IOException {
+			throws IOException, InterruptedException {
 
-		Vector vData = new Vector();
-		Vector vName = new Vector();
-		Vector vRow;
-		DefaultTableModel tableModel;
+		int i = 0;
+		final Vector vData = new Vector();
+		final Vector vName = new Vector();
 		vName.add("时间");
 		vName.add("记录值");
 		if (!serverSocket.isClosed()) {
@@ -69,66 +65,57 @@ public class Receiver {
 		Calendar calendar;
 		Date date;
 		Boolean flag = true;
+
 		try (DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 			while (true) {
 
+				i++;
 				if (serverSocket.isClosed()) {
 					break;
 				}
 
 				byte[] bytes = new byte[8]; // 假设发送的字节数不超过 1024 个
-				int size = dis.read(bytes); // size 是读取到的字节数
+				byte[] bytes1 = new byte[8];
+				bytes1[0] = bytes[0];
+				bytes1[1] = bytes[1];
+				bytes1[2] = bytes[2];
 
-				if (size > 0) {
-					Date now = new Date();
-
-					SimpleDateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
+				int size = dis.read(bytes1); // size 是读取到的字节数
+				System.out.println("本次读到的字节数是：" + size);
+				if (size > 0&&size==3) {
+					final Date now = new Date();
+					final SimpleDateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
 
 					try {
 						// System.out.println(bytes.length);
 
-						String string = bytesToHex(bytes, 0, 8);
+						// String string = bytesToHex(bytes, 0, 8);
 						// System.out.println(string.length());
-						Map<Integer, String> map1 = new HashMap<Integer, String>();
-						map1.put(1, bytesToHex(bytes, 0, 1).trim());
-						map1.put(2, bytesToHex(bytes, 1, 2).trim());
-						map1.put(3, bytesToHex(bytes, 2, 3).trim());
-						map1.put(4, bytesToHex(bytes, 3, 4).trim());
-						map1.put(5, bytesToHex(bytes, 4, 5).trim());
-						map1.put(6, bytesToHex(bytes, 5, 6).trim());
-						map1.put(7, bytesToHex(bytes, 6, 7).trim());
-						map1.put(8, bytesToHex(bytes, 7, 8).trim());
+						final String strnum = getStringnum(bytes1);
 
-						int a = Integer.parseInt(map1.get(1), 16);
-						int b = Integer.parseInt(map1.get(2), 16);
-						int c = Integer.parseInt(map1.get(3), 16);
-						int d = Integer.parseInt(map1.get(4), 16);
-						int e = Integer.parseInt(map1.get(5), 16);
-						int f = Integer.parseInt(map1.get(6), 16);
-						int g = Integer.parseInt(map1.get(7), 16);
-						int h = Integer.parseInt(map1.get(8), 16);
-				
-						String strnum;
-						if (a != 0)
-							strnum = a + "" + b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
-						else {
-							strnum = b + "" + c + "" + d + "" + e + "" + "." + f + "" + g + "" + h + "";
-
-						}
-						
 						value = Double.valueOf(strnum);
-						System.out.println(value);
+						// 获取转化后数据
 						String str2 = new String(bytes, "GB18030");
-                         
-						Date date2=new Date(System.currentTimeMillis());
-						SimpleDateFormat simpleFormatter=new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
-						String dateString=simpleFormatter.format(date2);
-						String[]dStrings=dateString.split("-");
-						Day day = new Day(Integer.parseInt(dStrings[2]), Integer.parseInt(dStrings[1]), Integer.parseInt(dStrings[0]));
-						Hour hour=new Hour(Integer.parseInt(dStrings[3]),day);
-						Minute minute=new Minute(Integer.parseInt(dStrings[4]),hour);
-						
-						timeSeries.addOrUpdate(new Second(Integer.parseInt(dStrings[5]),minute), value);
+
+						// 对时间进行加工
+						Date date2 = new Date(System.currentTimeMillis());
+						SimpleDateFormat simpleFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+						String dateString = simpleFormatter.format(date2);
+
+						// 整理加工后的时间，以获取年，月，日。
+						String[] dStrings = dateString.split("-");
+						Day day = new Day(Integer.parseInt(dStrings[2]), Integer.parseInt(dStrings[1]),
+								Integer.parseInt(dStrings[0]));
+						Hour hour = new Hour(Integer.parseInt(dStrings[3]), day);
+						Minute minute = new Minute(Integer.parseInt(dStrings[4]), hour);
+						if (value > 100) {
+							value = 100;
+						}
+
+						if (i > 15 && value <= 100) {
+							// 将最终获取的描述加入到时见序列表中
+							timeSeries.addOrUpdate(new Second(Integer.parseInt(dStrings[5]), minute), value);
+						}
 						if (dStrings[3].equals("00")) {
 							timeSeries.clear();
 						}
@@ -138,13 +125,13 @@ public class Receiver {
 
 						}
 
+						// 进程睡眠意义是什么？
 						try {
 							Thread.currentThread().sleep(100);
 						} catch (InterruptedException e1) {
 							e1.printStackTrace();
 						} //
-						System.out.println(lowerlimit); //
-						System.out.println(toplimit);
+
 						Date date1 = new Date(System.currentTimeMillis());
 						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 						String time = sdf.format(date1);
@@ -159,14 +146,24 @@ public class Receiver {
 						map.put("记录时间", time);
 						datas.add(map);
 
-						if (value >= lowerlimit && value <= toplimit) {
-							vRow = new Vector();
-							vRow.add(sFormat.format(now));
-							vRow.add(strnum);
-							vData.add(vRow);
-							tableModel = new DefaultTableModel(vData, vName);
-							jTable.setModel(tableModel);
+						if (value > lowerlimit || value < toplimit) {
+							if (i > 15) {
 
+								new Thread(new Runnable() {
+
+									@Override
+									public void run() {
+										// TODO Auto-generated method stub
+										Vector vRow = new Vector();
+										vRow.add(sFormat.format(now));
+										vRow.add(strnum);
+										vData.add(vRow);
+										DefaultTableModel tableModel = new DefaultTableModel(vData, vName);
+										jTable.setModel(tableModel);
+									}
+								}).start();
+
+							}
 						}
 						jTextField.setText(strnum);
 
@@ -203,5 +200,35 @@ public class Receiver {
 		return hexBuilder.toString().toUpperCase();
 	}
 
+	public String getStringnum(byte[] bytes) {
+		Map<Integer, String> map1 = new HashMap<Integer, String>();
+		map1.put(1, bytesToHex(bytes, 0, 1).trim());
+		map1.put(2, bytesToHex(bytes, 1, 2).trim());
+		map1.put(3, bytesToHex(bytes, 2, 3).trim());
+		// map1.put(4, bytesToHex(bytes, 3, 4).trim());
+		// map1.put(5, bytesToHex(bytes, 4, 5).trim());
+		// map1.put(6, bytesToHex(bytes, 5, 6).trim());
+		// map1.put(7, bytesToHex(bytes, 6, 7).trim());
+		// map1.put(8, bytesToHex(bytes, 7, 8).trim());
+
+		int a = Integer.parseInt(map1.get(1), 16);
+		int b = Integer.parseInt(map1.get(2), 16);
+		int c = Integer.parseInt(map1.get(3), 16);
+		// int d = Integer.parseInt(map1.get(4), 16);
+		// int e = Integer.parseInt(map1.get(5), 16);
+		// int f = Integer.parseInt(map1.get(6), 16);
+		// int g = Integer.parseInt(map1.get(7), 16);
+		// int h = Integer.parseInt(map1.get(8), 16);
+
+		String strnum;
+		if (a != 0)
+			strnum = a + "" + b + "" + "." + c + "";
+		else {
+			strnum = b + "" + "." + c + "";
+
+		}
+
+		return strnum;
+	}
 
 }
